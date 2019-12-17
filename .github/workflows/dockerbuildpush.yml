@@ -7,10 +7,13 @@ jobs:
   hub:
     runs-on: ubuntu-18.04
     steps:
-      - name: Build and push to Docker Hub
-        uses: pangzineng/Github-Action-One-Click-Docker@master
-        env:
-          DOCKER_NAMESPACE: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          DOCKER_IMAGE_NAME: "zuluru3"
+      - name: Checkout
+        uses: actions/checkout@v2
+      - run: sh -c "docker build -t ${{ secrets.DOCKER_USERNAME }}/zuluru3 ${*:-.}"
+      - name: Dockerize
+        if: success()
+        uses: manusa/actions-publish-docker@master
+        with:
+          name: ${{ secrets.DOCKER_USERNAME }}/zuluru3
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
