@@ -1114,12 +1114,39 @@ class TeamsControllerTest extends ControllerTestCase {
 	public function testSchedule() {
 		// Anyone is allowed to see the schedule
 		$this->assertGetAsAccessOk(['controller' => 'Teams', 'action' => 'schedule', 'team' => TEAM_ID_RED], PERSON_ID_ADMIN);
+		$this->assertResponseContains('/games/edit?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/games/view?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseNotContains('/team_events/view?event=' . TEAM_EVENT_ID_RED_PRACTICE);
+
 		$this->assertGetAsAccessOk(['controller' => 'Teams', 'action' => 'schedule', 'team' => TEAM_ID_RED], PERSON_ID_MANAGER);
+		$this->assertResponseContains('/games/edit?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/games/view?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseNotContains('/team_events/view?event=' . TEAM_EVENT_ID_RED_PRACTICE);
+
 		$this->assertGetAsAccessOk(['controller' => 'Teams', 'action' => 'schedule', 'team' => TEAM_ID_RED], PERSON_ID_COORDINATOR);
+		$this->assertResponseContains('/games/edit?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/games/view?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseNotContains('/team_events/view?event=' . TEAM_EVENT_ID_RED_PRACTICE);
+
 		$this->assertGetAsAccessOk(['controller' => 'Teams', 'action' => 'schedule', 'team' => TEAM_ID_RED], PERSON_ID_CAPTAIN);
+		$this->assertResponseNotContains('/games/edit?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/games/view?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/team_events/view?event=' . TEAM_EVENT_ID_RED_PRACTICE);
+
 		$this->assertGetAsAccessOk(['controller' => 'Teams', 'action' => 'schedule', 'team' => TEAM_ID_RED], PERSON_ID_PLAYER);
+		$this->assertResponseNotContains('/games/edit?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/games/view?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/team_events/view?event=' . TEAM_EVENT_ID_RED_PRACTICE);
+
 		$this->assertGetAsAccessOk(['controller' => 'Teams', 'action' => 'schedule', 'team' => TEAM_ID_RED], PERSON_ID_VISITOR);
+		$this->assertResponseNotContains('/games/edit?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/games/view?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseNotContains('/team_events/view?event=' . TEAM_EVENT_ID_RED_PRACTICE);
+
 		$this->assertGetAnonymousAccessOk(['controller' => 'Teams', 'action' => 'schedule', 'team' => TEAM_ID_RED]);
+		$this->assertResponseNotContains('/games/edit?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseContains('/games/view?game=' . GAME_ID_LADDER_FINALIZED_HOME_WIN);
+		$this->assertResponseNotContains('/team_events/view?event=' . TEAM_EVENT_ID_RED_PRACTICE);
 	}
 
 	/**
@@ -1445,7 +1472,6 @@ class TeamsControllerTest extends ControllerTestCase {
 			PERSON_ID_ADMIN, ['event' => EVENT_ID_MEMBERSHIP]);
 		$this->assertResponseContains('<span id="people_person_' .  PERSON_ID_PLAYER . '" class="trigger">Pam Player</span>');
 		$this->assertResponseRegExp('#<input type="radio" name="player\[' .  PERSON_ID_PLAYER . '\]\[role\]" value="captain" id="player-' .  PERSON_ID_PLAYER . '-role-captain">\s*Captain#ms');
-		$this->assertResponseRegExp('#<input type="radio" name="player\[' .  PERSON_ID_PLAYER . '\]\[position\]" value="unspecified" id="player-' .  PERSON_ID_PLAYER . '-position-unspecified" checked="checked">\s*Unspecified#ms');
 
 		// Submit the add form
 		$this->assertPostAsAccessRedirect(['controller' => 'Teams', 'action' => 'add_from_event', 'team' => TEAM_ID_OAKS],
@@ -1520,7 +1546,6 @@ class TeamsControllerTest extends ControllerTestCase {
 			PERSON_ID_MANAGER, ['event' => EVENT_ID_MEMBERSHIP]);
 		$this->assertResponseContains('<span id="people_person_' .  PERSON_ID_PLAYER . '" class="trigger">Pam Player</span>');
 		$this->assertResponseRegExp('#<input type="radio" name="player\[' .  PERSON_ID_PLAYER . '\]\[role\]" value="captain" id="player-' .  PERSON_ID_PLAYER . '-role-captain">\s*Captain#ms');
-		$this->assertResponseRegExp('#<input type="radio" name="player\[' .  PERSON_ID_PLAYER . '\]\[position\]" value="unspecified" id="player-' .  PERSON_ID_PLAYER . '-position-unspecified" checked="checked">\s*Unspecified#ms');
 
 		// But not to teams in other affiliates
 		$this->assertPostAsAccessDenied(['controller' => 'Teams', 'action' => 'add_from_event', 'team' => TEAM_ID_BEARS],
@@ -1543,7 +1568,6 @@ class TeamsControllerTest extends ControllerTestCase {
 			PERSON_ID_COORDINATOR, ['event' => EVENT_ID_MEMBERSHIP]);
 		$this->assertResponseContains('<span id="people_person_' .  PERSON_ID_PLAYER . '" class="trigger">Pam Player</span>');
 		$this->assertResponseRegExp('#<input type="radio" name="player\[' .  PERSON_ID_PLAYER . '\]\[role\]" value="captain" id="player-' .  PERSON_ID_PLAYER . '-role-captain">\s*Captain#ms');
-		$this->assertResponseRegExp('#<input type="radio" name="player\[' .  PERSON_ID_PLAYER . '\]\[position\]" value="unspecified" id="player-' .  PERSON_ID_PLAYER . '-position-unspecified" checked="checked">\s*Unspecified#ms');
 
 		// But not other divisions
 		$this->assertPostAsAccessDenied(['controller' => 'Teams', 'action' => 'add_from_event', 'team' => TEAM_ID_OAKS],

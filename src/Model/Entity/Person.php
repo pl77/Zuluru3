@@ -267,7 +267,7 @@ class Person extends Entity {
 
 	protected function _getAlternateEmailFormatted() {
 		$email = $this->alternate_email;
-		$name = $this->full_name . ' (' . __('alternate') . ')';
+		$name = $this->full_name . __(' ({0})', __('alternate'));
 		if (empty($email)) {
 			return null;
 		} else if (empty($name)) {
@@ -280,10 +280,10 @@ class Person extends Entity {
 	protected function _getGenderDisplay() {
 		$display = __($this->gender);
 		if ($this->gender == 'Self-defined') {
-			$display .= ' (' . h($this->gender_description) . ')';
+			$display .= __(' ({0})', h($this->gender_description));
 		}
 		if (!in_array($this->gender, Configure::read('options.gender_binary'))) {
-			$display .= ' (' . __('Roster designation: {0}', __($this->roster_designation)) . ')';
+			$display .= __(' ({0}: {1})', __('Roster Designation', __($this->roster_designation)));
 		}
 
 		return $display;
@@ -297,7 +297,7 @@ class Person extends Entity {
 	public function merge(Person $new) {
 		$preserve = ['id', 'status', 'user_id'];
 		// These are player fields, which might not be present if the one being merged is a parent
-		$preserve_if_new_is_empty = ['gender', 'gender_description', 'roster_designation', 'birthdate', 'height', 'shirt_size'];
+		$preserve_if_new_is_empty = ['gender', 'gender_description', 'roster_designation', 'birthdate', 'height', 'shirt_size', 'user'];
 
 		foreach (array_keys($new->_properties) as $prop) {
 			if ($this->isAccessible($prop) && !in_array($prop, $preserve)) {

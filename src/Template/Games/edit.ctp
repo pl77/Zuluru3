@@ -1,4 +1,9 @@
 <?php
+/**
+ * @type \App\Model\Entity\Game $game
+ * @type \App\Module\Spirit $spirit_obj
+ */
+
 use Cake\Core\Configure;
 use App\Controller\AppController;
 use App\Core\ModuleRegistry;
@@ -12,8 +17,8 @@ $this->Html->addCrumb(__('Edit'));
 $preliminary = ($game->home_team_id === null || ($game->division->schedule_type != 'competition' && $game->away_team_id === null));
 if ($preliminary) {
 	$carbon_flip_options = [
-		2 => __('{0} won', __('Home team')),
-		0 => __('{0} won', __('Away team')),
+		2 => __('{0} won', __('Home Team')),
+		0 => __('{0} won', __('Away Team')),
 		1 => __('tie'),
 	];
 } else {
@@ -22,12 +27,6 @@ if ($preliminary) {
 		0 => __('{0} won', $game->away_team->name),
 		1 => __('tie'),
 	];
-}
-
-if (Configure::read('scoring.gender_ratio')) {
-	$gender_ratio_options = Configure::read("sports.{$game->division->league->sport}.gender_ratio.{$game->division->ratio_rule}");
-} else {
-	$gender_ratio_options = false;
 }
 ?>
 
@@ -61,7 +60,7 @@ endif;
 					echo " ({$game->home_dependency})";
 				}
 				if ($game->division->schedule_type != 'tournament') {
-					echo ' (' . __('currently rated') . ": {$game->home_team->rating})";
+					echo __(' ({0})', __('currently rated: {0}', $game->home_team->rating));
 				}
 			}
 		?></dd>
@@ -81,7 +80,7 @@ endif;
 					echo " ({$game->away_dependency})";
 				}
 				if ($game->division->schedule_type != 'tournament') {
-					echo ' (' . __('currently rated') . ": {$game->away_team->rating})";
+					echo ' (' . __('currently rated', $game->away_team->rating);
 				}
 			}
 		?></dd>
@@ -169,9 +168,11 @@ if ($awayScoreEntry->id) {
 
 if ($game->isFinalized()):
 	$league_obj = ModuleRegistry::getInstance()->load("LeagueType:{$game->division->schedule_type}");
+?>
+        <dl class="dl-horizontal">
+<?php
 	echo $this->element("Leagues/game/{$league_obj->render_element}/score", compact('game'));
 ?>
-		<dl class="dl-horizontal">
 			<dt><?= __('Score Approved By') ?></dt>
 			<dd><?php
 				if ($game->approved_by_id < 0) {
@@ -198,8 +199,8 @@ if (!empty($game->score_entries)):
 			<thead>
 				<tr>
 					<th></th>
-					<th><?= $this->Text->truncate($game->home_team->name, 23) . ' (' . __('home') . ')' ?></th>
-					<th><?= $this->Text->truncate($game->away_team->name, 23) . ' (' . __('away') . ')' ?></th>
+					<th><?= $this->Text->truncate($game->home_team->name, 23) . __(' ({0})', __('home')) ?></th>
+					<th><?= $this->Text->truncate($game->away_team->name, 23) . __(' ({0})', __('away')) ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -292,12 +293,12 @@ if (!empty($game->score_entries)):
 <?php
 	endif;
 
-	if ($gender_ratio_options):
+	if ($game->division->women_present):
 ?>
 				<tr>
-					<td><?= __('Opponent\'s Gender Ratio') ?></td>
-					<td><?= $homeScoreEntry->gender_ratio ? $gender_ratio_options[$homeScoreEntry->gender_ratio] : '' ?></td>
-					<td><?= $awayScoreEntry->gender_ratio ? $gender_ratio_options[$awayScoreEntry->gender_ratio] : '' ?></td>
+					<td><?= __('How many women designated players did you have at this game?') ?></td>
+					<td><?= $homeScoreEntry->women_present ?></td>
+					<td><?= $awayScoreEntry->women_present ?></td>
 				</tr>
 <?php
 	endif;
@@ -341,20 +342,16 @@ if (!$preliminary):
 <?php
 	endif;
 
-	if (Configure::read('scoring.gender_ratio') && $gender_ratio_options):
+	if ($game->division->women_present):
 ?>
-			<dt class="normal"><?= __('Home Gender Ratio') ?></dt>
-			<dd class="normal"><?= $this->Form->input('score_entries.1.gender_ratio', [
+			<dt class="normal"><?= __('Home Team Women Designated Players') ?></dt>
+			<dd class="normal"><?= $this->Form->input('score_entries.0.women_present', [
 				'label' => false,
-				'empty' => '---',
-				'options' => $gender_ratio_options,
 				'secure' => false,
 			]) ?></dd>
-			<dt class="normal"><?= __('Away Gender Ratio') ?></dt>
-			<dd class="normal"><?= $this->Form->input('score_entries.0.gender_ratio', [
+			<dt class="normal"><?= __('Away Team Women Designated Players') ?></dt>
+			<dd class="normal"><?= $this->Form->input('score_entries.1.women_present', [
 				'label' => false,
-				'empty' => '---',
-				'options' => $gender_ratio_options,
 				'secure' => false,
 			]) ?></dd>
 <?php

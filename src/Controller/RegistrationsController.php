@@ -2,6 +2,7 @@
 namespace App\Controller;
 
 use App\Authorization\ContextResource;
+use App\Model\Entity\Event;
 use App\Model\Entity\Registration;
 use Cake\Core\Configure;
 use Cake\Database\Expression\QueryExpression;
@@ -458,17 +459,7 @@ class RegistrationsController extends AppController {
 			$registration = $this->Registrations->patchEntity($registration, $this->request->data, ['associated' => [
 				'Responses' => ['validate' => $responseValidator],
 			]]);
-			// The entity will contain a sequentially-numbered array of responses, but we need specific numbers
-			// in order for any errors that occur to be correctly reported in the form. :-(
-			// TODO: Report to Cake?
-			$responses = [];
-			foreach ($event->questionnaire->questions as $key => $question) {
-				$response = collection($registration->responses)->firstMatch(['question_id' => $question->id]);
-				if ($response) {
-					$responses[$key] = $response;
-				}
-			}
-			$registration->responses = $responses;
+			$this->_reindexResponses($registration, $event);
 
 			if (!$this->Registrations->save($registration, compact('event', 'event_obj'))) {
 				$this->Flash->warning(__('The registration could not be saved. Please correct the errors below and try again.'));
@@ -521,6 +512,7 @@ class RegistrationsController extends AppController {
 					'person_id' => $for_edit ? $price->event->registrations[0]->person_id : $this->UserCache->currentId(),
 					'price' => $price,
 					'for_edit' => $for_edit ? $price->event->registrations[0] : false,
+					'waiting' => $this->request->getQuery('waiting'),
 					'ignore_date' => true,
 				]), 'register');
 
@@ -997,7 +989,7 @@ class RegistrationsController extends AppController {
 			$registration->payments[] = $refund;
 			$registration->dirty('payments', true);
 
-			$payment->refunded_amount += $this->request->data['payment_amount'];
+			$payment->refunded_amount = round($payment->refunded_amount + $this->request->data['payment_amount'], 2);
 
 			if ($this->Registrations->connection()->transactional(function () use ($registration, $payment_obj, $payment) {
 				// The registration is also passed as an option, so that the payment rules have easy access to it
@@ -1063,7 +1055,7 @@ class RegistrationsController extends AppController {
 			$registration->payments[] = $refund;
 			$registration->dirty('payments', true);
 
-			$payment->refunded_amount += $this->request->data['payment_amount'];
+			$payment->refunded_amount = round($payment->refunded_amount + $this->request->data['payment_amount'], 2);
 
 			$credit = $this->Registrations->People->Credits->newEntity([
 				'affiliate_id' => $registration->event->affiliate_id,
@@ -1190,7 +1182,7 @@ class RegistrationsController extends AppController {
 			$registration->payments[] = $refund;
 			$registration->dirty('payments', true);
 
-			$payment->refunded_amount += $this->request->data['payment_amount'];
+			$payment->refunded_amount = round($payment->refunded_amount + $this->request->data['payment_amount'], 2);
 
 			$transfer = $this->Registrations->Payments->newEntity([
 				'payment_type' => 'Transfer',
@@ -1285,6 +1277,7 @@ class RegistrationsController extends AppController {
 			$registration = $this->Registrations->patchEntity($registration, $this->request->data, ['associated' => [
 				'Responses' => ['validate' => $responseValidator],
 			]]);
+			$this->_reindexResponses($registration, $registration->event);
 			if (!$registration->errors) {
 				// TODO: Seems that the marshaller won't update $registration->price, even though
 				// $registration->price_id gets set. Because it's a BelongsTo relationship, perhaps?
@@ -1319,17 +1312,7 @@ class RegistrationsController extends AppController {
 			$this->Authorization->can(new ContextResource($registration->event, ['price' => $registration->price, 'for_edit' => $registration, 'all_rules' => true]), 'register');
 		}
 
-		// The entity will contain a sequentially-numbered array of responses, but we need specific numbers
-		// in order for any errors that occur to be correctly reported in the form. :-(
-		// TODO: Report to Cake?
-		$responses = [];
-		foreach ($registration->event->questionnaire->questions as $key => $question) {
-			$response = collection($registration->responses)->firstMatch(['question_id' => $question->id]);
-			if ($response) {
-				$responses[$key] = $response;
-			}
-		}
-		$registration->responses = $responses;
+        $this->_reindexResponses($registration, $registration->event);
 
 		$this->set(compact('registration'));
 	}
@@ -1412,6 +1395,29 @@ class RegistrationsController extends AppController {
 		}
 
 		$this->set(compact('event'));
+	}
+
+	private function _reindexResponses(Registration $registration, Event $event) {
+		// The entity will contain a sequentially-numbered array of responses, but we need specific numbers
+		// in order for any errors that occur to be correctly reported in the form. :-(
+		// TODO: Report to Cake?
+		$responses = [];
+		foreach ($event->questionnaire->questions as $key => $question) {
+			if ($question->type == 'checkbox' && count($question->answers) > 1) {
+				foreach ($question->answers as $akey => $answer) {
+					$response = collection($registration->responses)->firstMatch(['question_id' => $question->id, 'answer_id' => $answer->id]);
+					if ($response) {
+						$responses[$key * 100 + $akey] = $response;
+					}
+				}
+			} else {
+				$response = collection($registration->responses)->firstMatch(['question_id' => $question->id]);
+				if ($response) {
+					$responses[$key * 100] = $response;
+				}
+			}
+		}
+		$registration->responses = $responses;
 	}
 
 }

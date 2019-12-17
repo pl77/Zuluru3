@@ -998,7 +998,7 @@ class GamesController extends AppController {
 				} else if (!$this->Authorization->can($team, 'attendance')) {
 					return $this->redirect(['controller' => 'Teams', 'action' => 'view', 'team' => $team_id]);
 				} else if ($id) {
-					return $this->redirect(['Controller' => 'Games', 'action' => 'attendance', 'team' => $team_id, 'game' => $id]);
+					return $this->redirect(['controller' => 'Games', 'action' => 'attendance', 'team' => $team_id, 'game' => $id]);
 				} else {
 					return $this->redirect(['controller' => 'Teams', 'action' => 'attendance', 'team' => $team_id]);
 				}
@@ -1357,7 +1357,7 @@ class GamesController extends AppController {
 			$this->set('message', __('You must indicate the scoring play so that the new score can be calculated.'));
 			return;
 		}
-		$points = Configure::read("sports.{$game->division->league->sport}.score_options.{$this->request->data['play']}");
+		$points = Configure::read("sports.{$game->division->league->sport}.score_points.{$this->request->data['play']}");
 		if (!$points) {
 			$this->set('message', __('Invalid scoring play!'));
 			return;
@@ -1806,7 +1806,7 @@ class GamesController extends AppController {
 			if ($text) {
 				$twitter .= __($text, $team->twitterName(), $opponent->twitterName()) . ' ' . __('to start the game');
 			} else {
-				$twitter .= __('game started');
+				$twitter .= __('Game started');
 			}
 			$twitter .= '.';
 			$this->set('twitter', addslashes($twitter));
@@ -2004,12 +2004,14 @@ class GamesController extends AppController {
 		if ($this->request->is(['patch', 'post', 'put'])) {
 			// TODO: Move these checks to rules?
 			if (!empty($game->score_entries) && !array_key_exists('id', $this->request->data['score_entries'][0])) {
-				$this->Flash->warning(__('There is already a score submitted by your team for this game. To update this, use the "edit" link.'));
+				$this->Flash->warning(__('There is already a score submitted by your team for this game. To update this, use the "{0}" link.',
+					__('Edit Score')));
 				return $this->redirect(['action' => 'view', 'game' => $id]);
 			}
 
 			if (!empty($game->spirit_entries) && !array_key_exists('id', $this->request->data['spirit_entries'][0])) {
-				$this->Flash->warning(__('There is already a spirit score submitted by your team for this game. To update this, use the "edit" link.'));
+				$this->Flash->warning(__('There is already a spirit score submitted by your team for this game. To update this, use the "{0}" link.',
+					__('Edit Score')));
 				return $this->redirect(['action' => 'view', 'game' => $id]);
 			}
 
@@ -2040,7 +2042,7 @@ class GamesController extends AppController {
 		} else {
 			// Include any parameters from emailed confirmation link
 			foreach (['status', 'score_for', 'score_against', 'home_carbon_flip'] as $field) {
-				if ($this->request->getQuery($field)) {
+				if ($this->request->getQuery($field) !== null) {
 					if (empty($game->score_entries)) {
 						$game->score_entries = [$this->Games->ScoreEntries->newEntity()];
 					}

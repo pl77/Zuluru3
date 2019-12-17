@@ -9,7 +9,7 @@ $this->Html->addCrumb(__('Edit'));
 
 <div class="registrations form">
 	<h2><?= __('Edit Registration') ?></h2>
-	<?= $this->Form->create($registration, ['align' => 'horizontal']) ?>
+	<?= $this->Form->create($registration) // This form is intentionally not 'align' => 'horizontal' ?>
 	<fieldset>
 		<legend><?= __('Registration Details') ?></legend>
 <?php
@@ -81,13 +81,13 @@ if (count($registration->event->prices) > 1 || ($registration->event->prices[0][
 <?php
 		$options = [];
 		foreach ($registration->event->prices as $price_option) {
-			$options[$price_option->id] = $price_option->name . ' (' . $this->Number->currency($price_option->total) . ')';
+			$options[$price_option->id] = $price_option->name . __(' ({0})', $this->Number->currency($price_option->total));
 		}
 		echo $this->Jquery->ajaxInput('price_id', [
 			'selector' => '#PaymentDetails',
 			'url' => ['action' => 'register_payment_fields', 'registration_id' => $registration->id, 'for_edit' => true],
 		], [
-			'label' => __('Registration options'),
+			'label' => __('Registration Options'),
 			'empty' => __('Select one:'),
 			'options' => $options,
 		]);

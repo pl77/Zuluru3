@@ -45,14 +45,14 @@ foreach ($league->divisions as $division) {
 	foreach ($division->teams as $team) {
 		usort($team->people, ['App\Model\Table\TeamsTable', 'compareRoster']);
 		foreach ($team->people as $person) {
-			$role = __(Configure::read("options.roster_role.{$person->_joinData->role}"));
+			$role = Configure::read("options.roster_role.{$person->_joinData->role}");
 			switch ($person->_joinData->status) {
 				case ROSTER_INVITED:
-					$role .= ' (' . __('invited') . ')';
+					$role .= __(' ({0})', __('invited'));
 					break;
 
 				case ROSTER_REQUESTED:
-					$role .= ' (' . __('requested') . ')';
+					$role .= __(' ({0})', __('requested'));
 					break;
 			}
 
@@ -66,7 +66,7 @@ foreach ($league->divisions as $division) {
 					$model = $name['model'];
 					if (is_array($person->$model) && !empty($person->{$model}[0]) && $person->{$model}[0]->has($field)) {
 						$row[] = $person->{$model}[0]->$field;
-					} else if ($person->$model->has($field)) {
+					} else if (is_a($person->$model, 'Cake\ORM\Entity') && $person->$model->has($field)) {
 						$row[] = $person->$model->$field;
 					} else {
 						$row[] = '';

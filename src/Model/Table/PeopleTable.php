@@ -330,16 +330,12 @@ class PeopleTable extends AppTable {
 				->add('relatives', 'antispam', [
 					'rule' => function ($value, $context) {
 						if (!is_array($value) || !array_key_exists(0, $value)) {
-							// TODO: We don't really want to sleep here, as it can allow DoS attacks.
-							// Better would be something like the flood mechanism in Drupal.
-							sleep(2);
 							return false;
 						}
 
 						// Anyone that hasn't selected the parent group, but still sends
 						// child information, is also a spambot.
 						if (!is_array($context['data']['groups']['_ids']) || !in_array(GROUP_PARENT, $context['data']['groups']['_ids'])) {
-							sleep(2);
 							return false;
 						}
 
@@ -348,7 +344,6 @@ class PeopleTable extends AppTable {
 							array_key_exists('birthdate', $context['data']) && $context['data']['birthdate']['year'] &&
 							$value[0]['birthdate']['year'] < $context['data']['birthdate']['year'] + 12
 						) {
-							sleep(2);
 							return false;
 						}
 
@@ -415,7 +410,8 @@ class PeopleTable extends AppTable {
 					return empty($context['data']['home_phone']) && empty($context['data']['mobile_phone']);
 				})
 				->boolean('publish_work_phone')
-				->boolean('publish_alternate_work_phone');
+				->boolean('publish_alternate_work_phone')
+				->allowEmpty('publish_alternate_work_phone');
 		}
 
 		if (Configure::read('profile.mobile_phone')) {
@@ -425,7 +421,8 @@ class PeopleTable extends AppTable {
 					return empty($context['data']['home_phone']) && empty($context['data']['work_phone']);
 				})
 				->boolean('publish_mobile_phone')
-				->boolean('publish_alternate_mobile_phone');
+				->boolean('publish_alternate_mobile_phone')
+				->allowEmpty('publish_alternate_mobile_phone');
 		}
 
 		if (Configure::read('profile.addr_street')) {
@@ -544,9 +541,12 @@ class PeopleTable extends AppTable {
 			// Start with the list of valid group options for the user making the edit
 			$valid_groups = $this->Groups->find('options', ['require_player' => true])
 				// then limit by the groups that were requested.
-				->where(['Groups.id IN' => collection($entity->groups)->extract('id')->toList()]);
+				->where([
+					'Groups.id IN' => collection($entity->groups)->extract('id')->toList(),
+					'Groups.active' => true,
+				]);
 			// The resulting set should have the same number of rows as there were groups selected
-			return $valid_groups->count() == count($entity->groups);
+			return $valid_groups->count() == count(collection($entity->groups)->match(['active' => true])->toArray());
 		}, 'validGroup', [
 			'errorField' => 'groups',
 			'message' => __('You have selected an invalid group.'),
@@ -576,7 +576,7 @@ class PeopleTable extends AppTable {
 				return true;
 			}
 
-			$data = $entity->extract($this->schema()->columns(), true);
+			$data = $entity->extract($this->schema()->columns());
 
 			foreach (collection($entity->groups)->extract('id') as $group) {
 				switch ($group) {
