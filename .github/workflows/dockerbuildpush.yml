@@ -1,0 +1,16 @@
+name: Build and Push to DockerHub
+
+on:
+  push:
+
+jobs:
+  hub:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Build and push to Docker Hub
+        uses: pangzineng/Github-Action-One-Click-Docker@master
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        with:
+          entrypoint: entrypoint.sh
