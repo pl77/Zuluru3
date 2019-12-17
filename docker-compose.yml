@@ -18,7 +18,7 @@ services:
 
   zuluru:
     container_name: zuluru
-    image: zuluru:latest
+    image: pl77/zuluru3:latest
     build:
       context: .
     environment:
