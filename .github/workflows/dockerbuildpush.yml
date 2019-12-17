@@ -10,6 +10,7 @@ jobs:
       - name: Build and push to Docker Hub
         uses: pangzineng/Github-Action-One-Click-Docker@master
         env:
+          DOCKER_NAMESPACE: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DOCKER_IMAGE_NAME: "zuluru3"
